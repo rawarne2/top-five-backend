@@ -1,2 +1,4 @@
 .DS_Store
 topfive/__pycache__
+*__pycache__*
+.vscode
