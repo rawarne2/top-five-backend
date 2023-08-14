@@ -10,13 +10,13 @@
 ### Tech Stack:
 
 - Django: Python web framework
-- MongoDB: NoSQL database
+- MongoDB Atlas: NoSQL cloud database
 - PyMongo: Python driver for MongoDB
+- djongo: MongoDB connector for Django
 
-<!-- ### API Endpoints:
 
-- GET `/api/users` - get all users
-- GET `/api/users/<id>` - get user by id
-- POST `/api/users` - create new user
-- PUT `/api/users/<id>` - update user by id
-- DELETE `/api/users/<id>` - delete user by id -->
+### Current Backend Progress:
+- [x] Created Django project and installed dependencies
+- [x] Created MongoDB Atlas cluster and connect to Django project using PyMongo and djongo
+- [x] Created admin login, logout, reset password, and register views
+- [x] Created Django users model and return list of user data from MongoDB at `/users`

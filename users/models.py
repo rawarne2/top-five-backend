@@ -32,6 +32,7 @@ class CustomUser(AbstractUser, PermissionsMixin):
     location = models.CharField(max_length=100)
     bio = models.TextField(max_length=500)
     email = models.EmailField(unique=True)
+    birthdate = models.DateField(null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
@@ -42,8 +43,7 @@ class CustomUser(AbstractUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['first_name', 'email', 'birthdate']
 
     def __str__(self):
-        return self.get_email_field_name()
+        return self.email
