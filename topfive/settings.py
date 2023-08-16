@@ -29,6 +29,7 @@ SECRET_KEY = environ['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']
 
+# Database settings
 DATABASE_URL = environ['DATABASE_URL']
 DATABASE_USERNAME = environ['DATABASE_USERNAME']
 DATABASE_PASSWORD = environ['DATABASE_PASSWORD']
@@ -114,7 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'users.UserProfile'
 
 
 # Internationalization
@@ -138,3 +139,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# CORS settings
+CORS_ORIGIN_ALLOW_ALL = True

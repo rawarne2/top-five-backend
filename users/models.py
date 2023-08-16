@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 
 
-class CustomUserManager(BaseUserManager):
+class UserProfileManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
@@ -24,7 +24,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class CustomUser(AbstractUser, PermissionsMixin):
+class UserProfile(AbstractUser, PermissionsMixin):
     gender_options = [("male", "Male"), ("female", "Female"),
                       ("non-binary", "Non-Binary")]
     age = models.PositiveIntegerField(null=True, blank=True)
@@ -41,7 +41,7 @@ class CustomUser(AbstractUser, PermissionsMixin):
     preferred_age_min = models.PositiveIntegerField(default=18)
     preferred_age_max = models.PositiveIntegerField(default=100)
 
-    objects = CustomUserManager()
+    objects = UserProfileManager()
 
     REQUIRED_FIELDS = ['first_name', 'email', 'birthdate']
 
