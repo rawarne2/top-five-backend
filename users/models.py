@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 
 
-class UserProfileManager(BaseUserManager):
+class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
@@ -24,26 +24,28 @@ class UserProfileManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class UserProfile(AbstractUser, PermissionsMixin):
+class User(AbstractUser, PermissionsMixin):
     gender_options = [("male", "Male"), ("female", "Female"),
                       ("non-binary", "Non-Binary")]
+
     age = models.PositiveIntegerField(null=True, blank=True)
-    gender = models.CharField(max_length=10, choices=gender_options)
-    location = models.CharField(max_length=100)
     bio = models.TextField(max_length=500)
-    email = models.EmailField(unique=True)
     birthdate = models.DateField(null=True, blank=True)
+    email = models.EmailField(unique=True)
+    gender = models.CharField(max_length=10, choices=gender_options)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    location = models.CharField(max_length=100)
 
     # Matching preferences
-    preferred_gender = models.CharField(max_length=10, choices=gender_options)
-    preferred_age_min = models.PositiveIntegerField(default=18)
     preferred_age_max = models.PositiveIntegerField(default=100)
+    preferred_age_min = models.PositiveIntegerField(default=18)
+    preferred_gender = models.CharField(max_length=10, choices=gender_options)
 
-    objects = UserProfileManager()
+    objects = UserManager()
 
-    REQUIRED_FIELDS = ['first_name', 'email', 'birthdate']
+    REQUIRED_FIELDS = ['first_name', 'birthdate']
+    USERNAME_FIELD = 'email'
 
     def __str__(self):
         return self.email

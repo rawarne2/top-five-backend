@@ -1,6 +1,6 @@
-from pymongo import MongoClient
-from dotenv import load_dotenv
 from os import environ
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 
