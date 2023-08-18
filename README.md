@@ -19,4 +19,5 @@
 - [x] Created Django project and installed dependencies
 - [x] Created MongoDB Atlas cluster and connect to Django project using PyMongo and djongo
 - [x] Created admin login, logout, reset password, and register views
-- [x] Created Django users model and return list of user data from MongoDB at `/users`
+- [x] Created Django users model and serializer
+- [x] Created Django users views and urls for authentication
