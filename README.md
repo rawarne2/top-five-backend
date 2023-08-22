@@ -4,7 +4,14 @@
 
 ### How to run:
 
+- create virtual environment: `python3 -m venv topfive_env`
 - activate virtual environment: `source ./topfive_env/bin/activate`
+- install dependencies: `pip install -r requirements.txt`
+- create .env file in topfive directory and add the following:
+```
+SECRET_KEY=your_secret_key
+DEBUG=True
+```
 - run server: `python manage.py runserver`
 
 ### Tech Stack:
