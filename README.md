@@ -10,7 +10,11 @@
 - create .env file in topfive directory and add the following:
 ```
 SECRET_KEY=your_secret_key
+DATABASE_URL=your_mongodb_url
+DATABASE_USERNAME=your_mongodb_username
+DATABASE_PASSWORD=your_mongodb_password
 DEBUG=True
+IS_PRODUCTION=False
 ```
 - run server: `python manage.py runserver`
 

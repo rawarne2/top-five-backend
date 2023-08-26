@@ -64,7 +64,7 @@ def login_view(request):
 @csrf_exempt
 def logout_view(request):
     logout(request)
-    return Response({'success': 'Logged out successfully'})
+    return Response({'success': f'{request.user.email} logged out successfully'})
 
 
 @api_view(['POST'])
