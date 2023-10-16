@@ -1,8 +1,11 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import logout, authenticate, login
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from .models import User
 from .serializers import UserSerializer
 
@@ -44,18 +47,26 @@ def delete_user(request, user_id):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @csrf_exempt
 def login_view(request):
     password = request.data.get('password')
     username = request.data.get('username')
-    print(request, username, password)
+
     user = authenticate(request, username=username, password=password)
-    print(user)
-    if user is not None:
-        print(user)
+
+    if user is not None and user.is_authenticated:
         login(request, user)
         serializer = UserSerializer(user)
-        return Response(serializer.data)
+        user_data = serializer.data
+
+        refresh_token = RefreshToken.for_user(user)
+        access_token = AccessToken.for_user(user)
+        tokens = {
+            'access': str(access_token),
+            'refresh': str(refresh_token)
+        }
+        return Response({'user': user_data, 'tokens': tokens})
     else:
         return Response({'error': 'Invalid email or password'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -69,6 +80,7 @@ def logout_view(request):
 
 @api_view(['POST'])
 @csrf_exempt
+@permission_classes(AllowAny)
 def signup_view(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
