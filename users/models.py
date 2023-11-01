@@ -27,8 +27,6 @@ class UserManager(BaseUserManager):
 class User(AbstractUser, PermissionsMixin):
     gender_options = [("male", "Male"), ("female", "Female"),
                       ("non-binary", "Non-Binary")]
-
-    age = models.PositiveIntegerField(null=True, blank=True)
     bio = models.TextField(max_length=500)
     birthdate = models.DateField(null=True, blank=True)
     email = models.EmailField(unique=True)
