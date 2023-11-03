@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserSerializer
@@ -13,8 +13,8 @@ from .serializers import UserSerializer
 
 @api_view(['GET'])
 @csrf_exempt
-@permission_classes([IsAdminUser])
-def get_all_users(request):
+@permission_classes([IsAuthenticated])
+def get_potential_partners(request):
     all_users = User.objects.all()
     serializer = UserSerializer(all_users, data=request.data, many=True)
     return Response(serializer.data)

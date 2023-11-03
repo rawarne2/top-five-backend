@@ -32,3 +32,20 @@ IS_PRODUCTION=False
 - [x] Created admin login, logout, reset password, and register views
 - [x] Created Django users model and serializer
 - [x] Created Django users views and urls for authentication
+- [x] Completed Login and Logout views with JWT 
+- [x] Implemented outstanding tokens on login and blacklisting refresh tokens on logout.
+
+
+### Next Steps:
+- [ ] Complete user sign_up and update_user views
+- [ ] Complete change_password and reset_password views
+- [ ] Add JWT Middleware
+- [ ] Set up unit tests
+- [ ] Set up integration tests
+- [ ] Add input validation for views
+- [ ] Implement matching algorithm for potential partners view
+- [ ] Implement notifications system
+- [ ] Implement chat functionality
+- [ ] Set up cron job to `flushexpiredtokens`
+- [ ] Deploy backend to AWS
+
