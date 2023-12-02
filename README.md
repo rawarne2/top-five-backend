@@ -2,6 +2,9 @@
 
 ## Backend service for Top Five dating app
 
+## About
+This is a backend service built using Django REST Framework, to handle the requests from the front end of the Top Five dating app React Native project. This project is in progress and is being created entirely by Rashaun Warner. 
+
 ### How to run:
 
 - create virtual environment: `python3 -m venv topfive_env`
@@ -32,20 +35,6 @@ IS_PRODUCTION=False
 - [x] Created admin login, logout, reset password, and register views
 - [x] Created Django users model and serializer
 - [x] Created Django users views and urls for authentication
-- [x] Completed Login and Logout views with JWT 
+- [x] Completed Login and Logout views with Django REST Framework Simple JWT 
 - [x] Implemented outstanding tokens on login and blacklisting refresh tokens on logout.
-
-
-### Next Steps:
-- [ ] Complete user sign_up and update_user views
-- [ ] Complete change_password and reset_password views
-- [ ] Add JWT Middleware
-- [ ] Set up unit tests
-- [ ] Set up integration tests
-- [ ] Add input validation for views
-- [ ] Implement matching algorithm for potential partners view
-- [ ] Implement notifications system
-- [ ] Implement chat functionality
-- [ ] Set up cron job to `flushexpiredtokens`
-- [ ] Deploy backend to AWS
-
+- [x] Prevented refresh tokens from  being used as access tokens on protected routes
