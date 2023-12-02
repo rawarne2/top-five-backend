@@ -46,4 +46,4 @@ class User(AbstractUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
 
     def __str__(self):
-        return self.email
+        return str(self.email)
