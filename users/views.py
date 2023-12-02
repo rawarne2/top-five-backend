@@ -2,11 +2,12 @@ from tokenize import TokenError
 from django.contrib.auth import logout, authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, api_view, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .authentication import NoRefreshJWTAuthentication
 from .models import User
 from .serializers import UserSerializer
 
@@ -22,15 +23,20 @@ def get_potential_partners(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([NoRefreshJWTAuthentication])
 @csrf_exempt
 def get_user(request, user_id):
-    user = User.objects.get(id=user_id)
+    try:
+        user = User.objects.get(id=user_id)
 
-    if user is not None and user.is_authenticated:
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-    else:
-        return Response({'get_user error': 'Invalid user id or authentication'}, status=status.HTTP_400_BAD_REQUEST)
+        if user is not None and user.is_authenticated:
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        else:
+            return Response({'get_user error': 'Invalid user id or authentication'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as err:
+        print(f"Error with token>>> {err}")
+        return Response({'error': err}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT'])
@@ -58,6 +64,7 @@ def delete_user(request, user_id):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@authentication_classes([JWTAuthentication])
 @csrf_exempt
 def login_view(request):
     password = request.data.get('password')
@@ -70,16 +77,14 @@ def login_view(request):
             login(request, user_object)
             serializer = UserSerializer(user_object)
             user_data = serializer.data
-
-            # TODO: handle DatabaseError for when outstanding token already exists
-            refresh_token = RefreshToken.for_user(user_object)
+            refresh_token = RefreshToken.for_user(user=user_object)
             access_token = refresh_token.access_token
 
             tokens = {
                 'access': str(access_token),
                 'refresh': str(refresh_token)
             }
-            user_object.save()
+
             return Response({'user': user_data, 'tokens': tokens})
 
         except Exception as err:
@@ -100,15 +105,13 @@ def logout_view(request):
 
             logout(request)
 
-            return Response({'success': 'signed out!'}, status=200)
+            return Response({'success': 'logout was successful!'}, status=200)
         except TokenError:
-            return Response({'error': 'Invalid or expired refresh token provided'}, status=400)
+            return Response({'error': 'Invalid or expired refresh token provided'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as err:
-            print('error logging out>>>', err)
-            return Response({'error': err}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(err, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        return Response({'error': 'No refresh token provided.'}, status=400)
+        return Response({'error': 'No refresh token provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
