@@ -68,7 +68,7 @@ def delete_user(request, user_id):
 @csrf_exempt
 def login_view(request):
     password = request.data.get('password')
-    email = request.data.get('email')
+    email = request.data.get('email').lower()
 
     user_object = authenticate(request, email=email, password=password)
 
