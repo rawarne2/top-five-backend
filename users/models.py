@@ -1,60 +1,64 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from datetime import datetime, timedelta
 
 
-class UserManager(BaseUserManager):
-    """
-    Custom user manager
-    """
-
-    def create_user(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a User with the given email and password.
-        """
-
-        if not email:
-            raise ValueError('The Email field must be set')
-
-        email = self.normalize_email(email)
-
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a superuser with the given email and password.
-        """
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-
-        user = self.create_user(email, password, **extra_fields)
-
-        user.save(using=self._db)
-        return user
+class Interest(models.Model):
+    name = models.CharField(max_length=25, unique=True)
 
 
 class User(AbstractUser, PermissionsMixin):
-    gender_options = [("male", "Male"), ("female", "Female"),
-                      ("non-binary", "Non-Binary")]
-    bio = models.TextField(max_length=500)
-    birthdate = models.DateField(null=True, blank=True)
     email = models.EmailField(unique=True)
-    gender = models.CharField(max_length=10, choices=gender_options)
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    location = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, unique=True)
 
-    # Matching preferences
-    preferred_age_max = models.PositiveIntegerField(default=100)
-    preferred_age_min = models.PositiveIntegerField(default=18)
-    preferred_gender = models.CharField(max_length=10, choices=gender_options)
-
-    objects = UserManager()
-
-    REQUIRED_FIELDS = ['first_name', 'birthdate']
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'phone_number']
 
     def __str__(self):
-        return str(self.email)
+        return self.get_full_name()
+
+
+class Profile(models.Model):
+    GENDER_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('non-binary', 'Non-Binary'),
+    ]
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='profile')
+    bio = models.TextField()
+    interests = models.ManyToManyField(Interest, blank=True)
+    picture_urls = models.URLField(null=True, blank=True)
+    birthdate = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
+    location = models.CharField(max_length=100)
+    preferred_gender = models.CharField(
+        max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    min_preferred_age = models.IntegerField(default=18)
+    max_preferred_age = models.IntegerField(default=99)
+
+    objects = models.Manager()
+
+    # TODO:
+    def get_filtered_profiles(self):
+        if self.preferred_gender:
+            today = datetime.now().date()
+            min_birthdate = today - \
+                timedelta(days=self.max_preferred_age * 365)
+            max_birthdate = today - \
+                timedelta(days=self.min_preferred_age * 365)
+            potential_matches = Profile.objects.filter(
+                gender=self.preferred_gender,
+                birthdate__range=(min_birthdate, max_birthdate)
+            )
+            return potential_matches
+        return Profile.objects.none()
+
+
+class Match(models.Model):
+    user1 = models.ForeignKey(
+        User, related_name='match1', on_delete=models.CASCADE)
+    user2 = models.ForeignKey(
+        User, related_name='match2', on_delete=models.CASCADE)
+    matched_at = models.DateTimeField(auto_now_add=True)

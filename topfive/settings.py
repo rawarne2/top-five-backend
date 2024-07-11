@@ -29,12 +29,12 @@ SECRET_KEY = environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']
+IS_PRODUCTION = environ['IS_PRODUCTION']
 
 # Database settings
-DATABASE_URL = environ['DATABASE_URL']
-DATABASE_USERNAME = environ['DATABASE_USERNAME']
+DATABASE_NAME = environ['DATABASE_NAME']
+DATABASE_USER = environ['DATABASE_USER']
 DATABASE_PASSWORD = environ['DATABASE_PASSWORD']
-IS_PRODUCTION = environ['IS_PRODUCTION']
 
 
 # Application definition
@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users.apps.UsersConfig',
-    'djongo',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -86,21 +85,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'topfive.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'topfive_db',
-        'ENFORCE_SCHEMA': False,
-        'CLIENT': {
-            'host': DATABASE_URL,
-            'username': DATABASE_USERNAME,
-            'password': DATABASE_PASSWORD,
-            'authSource': 'admin',  # Default authentication database
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "topfive_db",
+        "OPTIONS": {
+            "passfile": ".my_pgpass",
+            "client_encoding": "UTF8",
+            "dbname": DATABASE_NAME,
+            "user": DATABASE_USER,
+            "password": DATABASE_PASSWORD,
+            "host": "localhost",
+            "port": "5432",
         },
-    },
+    }
 }
 
 
@@ -127,8 +125,8 @@ AUTH_USER_MODEL = 'users.User'
 
 # Simple JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=600),  # adjust for prod
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),  # adjust for prod
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
@@ -139,13 +137,12 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken', 'rest_framework_simplejwt.tokens.RefreshToken'),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'UPDATE_LAST_LOGIN': True,
-    "JTI_CLAIM": "jti",
+    'JTI_CLAIM': 'jti',
 }
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'users.authentication.NoRefreshJWTAuthentication',
     )
 }
 
@@ -154,12 +151,9 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'EST'
-
-USE_I18N = True
-
 USE_TZ = True
+TIME_ZONE = 'EST'
+USE_I18N = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -175,4 +169,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = ['*']

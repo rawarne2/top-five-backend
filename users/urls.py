@@ -1,6 +1,6 @@
 from django.urls import path
-
 from . import views
+
 
 urlpatterns = [
     path("potential_partners/", views.get_potential_partners,
@@ -13,4 +13,9 @@ urlpatterns = [
     path("signup/", views.signup_view, name="signup"),
     path("change_password/", views.change_password, name="change_password"),
     path("reset_password/", views.reset_password, name="reset_password"),
+    path("get_profile/<int:user_id>/", views.get_profile, name="get_profile"),
+    path("update_profile/<int:user_id>/",
+         views.create_or_update_profile, name="update_profile"),
+    path("create_profile/<int:user_id>/", views.create_or_update_profile,
+         name="create_or_update_profile"),
 ]
