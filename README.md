@@ -28,7 +28,7 @@ This is a backend service built using Django REST Framework, to handle the reque
 - Created Interests model and serializer
 - Created Matches model and serializer
 - Created Profile model and serializer
-- **MAJOR CHANGE: I decided to switch from MongoDB to PostgreSQL! This big decision was decided after discovering that their compatibility is too limited for my needs. This was a great learning experience! I will write a Blog post about it by 7/14/2024 here: [https://medium.com/@Rashaunwarner](https://medium.com/@Rashaunwarner)!**
+- **MAJOR CHANGE: I decided to switch from MongoDB to PostgreSQL! This big decision was decided after discovering that their compatibility is too limited for my needs. This was a great learning experience!**
 - Blacklisting JWTs completely works. Login adds Outstanding Token and starts new session, new refresh and access with tokens/refresh, and logout blacklists and ends the session.
 - ~~Prevented refresh tokens from  being used as access tokens on protected routes~~
 - Implemented outstanding tokens on login and blacklisting refresh tokens on logout.
