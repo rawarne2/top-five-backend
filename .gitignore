@@ -8,3 +8,4 @@ X509*
 users/migrations
 .my_pgpass
 .pg_service.conf
+logs

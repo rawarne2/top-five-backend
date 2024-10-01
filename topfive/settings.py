@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from os import environ
+from os import environ, path, makedirs
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -19,7 +19,9 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+LOGS_DIR = path.join(BASE_DIR, 'logs')
+makedirs(LOGS_DIR, exist_ok=True)
+# TODO: prod -- chmod 755 /path/to/project/logs
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -36,6 +38,11 @@ DATABASE_NAME = environ['DATABASE_NAME']
 DATABASE_USER = environ['DATABASE_USER']
 DATABASE_PASSWORD = environ['DATABASE_PASSWORD']
 
+# AWS settings
+AWS_ACCESS_KEY_ID = environ['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY = environ['AWS_SECRET_ACCESS_KEY']
+AWS_S3_REGION_NAME = environ['AWS_S3_REGION_NAME']
+AWS_STORAGE_BUCKET_NAME = environ['AWS_STORAGE_BUCKET_NAME']
 
 # Application definition
 
@@ -51,6 +58,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'boto3',
 ]
 
 MIDDLEWARE = [
@@ -171,3 +179,43 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = ['*']
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': path.join(LOGS_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        '': {  # Root logger
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'users': {  # App-specific logger
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
