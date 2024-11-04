@@ -18,7 +18,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['id', 'user', 'bio', 'interests', 'picture_urls', 'gender', 'location',
-                  'preferred_gender', 'min_preferred_age', 'max_preferred_age', 'phone_number']
+                  'preferred_gender', 'min_preferred_age', 'max_preferred_age', 'phone_number', 'height', 'pronouns', 'highest_education', 'political_views', 'pet_preferences', 'exercise_level', 'additional_info', 'occupation', 'goals']
 
 
 class InterestSerializer(serializers.ModelSerializer):

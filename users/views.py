@@ -1,6 +1,6 @@
 from datetime import date
 from tokenize import TokenError
-from typing import Dict, List, Tuple
+from typing import List
 from django.contrib.auth import logout, authenticate, login
 from django.db import transaction
 from django.db.models import Q
@@ -14,10 +14,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from botocore.exceptions import NoCredentialsError
 import boto3
 import logging
+import re
 from psycopg import IntegrityError
 
 from topfive import settings
-from users.types import DeleteUserData, LoginData, LogoutData, MatchData, MatchesResponse, PasswordChangeData, PasswordResetData, PotentialMatchesResponse, PresignedUrl, PresignedUrlsRequest, PresignedUrlsResponse, ProfileUpdateData, UserCreateData, UserUpdateData
+from users.types import DeleteUserData, LoginData, LogoutData, MatchData, MatchesResponse, PasswordChangeData, PasswordResetData, PotentialMatchesResponse, PresignedUrlsRequest, ProfileData, UserCreateData, UserUpdateData
 from .serializers import UserSerializer, ProfileSerializer
 from .models import Match, User, Profile
 from .utils import get_user_from_db
@@ -135,72 +136,41 @@ def get_profile(request: Request, user_id: int) -> Response:
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-PictureURL = Tuple[int, str]
-
-
-def update_picture_urls(existing_urls: List[PictureURL], new_picture_urls: List[PictureURL]) -> List[PictureURL]:
-    # Convert existing_urls to a dictionary for easier manipulation
-    url_dict: Dict[int, str] = {
-        int(index): url for index, url in existing_urls}
-
-    # Update with new URLs
-    for index, url in new_picture_urls:
-        if 0 <= index < 7:
-            url_dict[index] = url
-
-    # Convert back to list of tuples and sort by index
-    updated_urls = list(url_dict.items())
-    updated_urls.sort(key=lambda x: x[0])
-
-    return updated_urls[:7]  # Ensure we don't exceed 7 photos
-
-
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 @csrf_exempt
 def update_profile(request: Request, user_id: int) -> Response:
     try:
-        profile = Profile.objects.get(user_id=user_id)
+        profile: Profile = Profile.objects.get(user_id=user_id)
     except Profile.DoesNotExist:
         logger.error(f"Profile not found for user_id: {user_id}")
         return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     try:
-        update_data = request.data
-        old_picture_urls = profile.picture_urls.copy()
+        update_data: ProfileData = request.data
 
-        # Handle picture_urls separately
+        # TODO: extract into separate function
+        # TODO: allow deleting pictures
         if 'picture_urls' in update_data:
-            # Convert the incoming data to the correct format
-            new_picture_urls = []
-            for item in update_data['picture_urls']:
-                if isinstance(item, dict) and 'index' in item and 'url' in item:
-                    try:
-                        index = int(item['index'])
-                        new_picture_urls.append((index, item['url']))
-                    except ValueError:
-                        # If index can't be converted to int, skip this entry
-                        continue
-                elif isinstance(item, (list, tuple)) and len(item) == 2:
-                    try:
-                        index = int(item[0])
-                        new_picture_urls.append((index, item[1]))
-                    except ValueError:
-                        # If index can't be converted to int, skip this entry
-                        continue
-
-            new_picture_urls = update_picture_urls(
-                profile.picture_urls, new_picture_urls)
-            update_data['picture_urls'] = new_picture_urls
-
+            def find_photo_index(url):
+                match = re.search(r'photo_(\d+)\.[^/]+$', url)
+                if match:
+                    return int(match.group(1))
+                return None
+            photo_indexes = [find_photo_index(url)
+                             for url in update_data['picture_urls']]
+            new_photos_to_save = profile.picture_urls
+            for index, url in zip(photo_indexes, update_data['picture_urls']):
+                if index >= len(new_photos_to_save):
+                    new_photos_to_save.append(url)
+                else:
+                    new_photos_to_save[index] = url
+            update_data['picture_urls'] = new_photos_to_save
         serializer = ProfileSerializer(profile, data=update_data, partial=True)
+
         if serializer.is_valid():
             with transaction.atomic():
                 serializer.save()
-
-            # Clean up S3 after successful database update
-            if 'picture_urls' in update_data:
-                cleanup_s3_photos(user_id, old_picture_urls, new_picture_urls)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -210,35 +180,13 @@ def update_profile(request: Request, user_id: int) -> Response:
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def cleanup_s3_photos(user_id: int, old_urls: List[PictureURL], new_urls: List[PictureURL]):
-    s3_client = boto3.client('s3',
-                             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                             region_name=settings.AWS_S3_REGION_NAME)
-
-    old_dict = dict(old_urls)
-    new_dict = dict(new_urls)
-
-    for index, old_url in old_dict.items():
-        if old_url and (index not in new_dict or new_dict[index] != old_url):
-            old_key = f'user_{user_id}/photo_{index}.jpg'
-            try:
-                s3_client.delete_object(
-                    Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=old_key)
-                logger.info(
-                    f"Deleted old photo for user {user_id} at index {index}")
-            except Exception as e:
-                logger.error(
-                    f"Failed to delete old photo for user {user_id} at index {index}: {str(e)}")
-
-
 '''
 AUTHENTICATION VIEWS
 '''
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+@ api_view(['POST'])
+@ permission_classes([AllowAny])
 def login_view(request: Request) -> Response:
     try:
         data: LoginData = request.data
@@ -264,8 +212,8 @@ def login_view(request: Request) -> Response:
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@ api_view(['POST'])
+@ permission_classes([IsAuthenticated])
 def logout_view(request: Request) -> Response:
     try:
         data: LogoutData = request.data
@@ -284,8 +232,8 @@ def logout_view(request: Request) -> Response:
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@ api_view(['POST'])
+@ permission_classes([IsAuthenticated])
 def change_password(request: Request) -> Response:
     try:
         data: PasswordChangeData = request.data
@@ -304,8 +252,8 @@ def change_password(request: Request) -> Response:
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+@ api_view(['POST'])
+@ permission_classes([AllowAny])
 def reset_password(request: Request, user_id: int) -> Response:
     user = get_user_from_db(user_id)
     if isinstance(user, Response):
@@ -335,8 +283,8 @@ def user_to_match_data(user: User) -> MatchData:
     }
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@ api_view(['GET'])
+@ permission_classes([IsAuthenticated])
 def get_potential_matches(request: Request) -> Response:
     try:
         user_profile = request.user.profile
@@ -372,8 +320,8 @@ def get_potential_matches(request: Request) -> Response:
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@ api_view(['GET'])
+@ permission_classes([IsAuthenticated])
 def get_matches(request: Request) -> Response:
     try:
         user_matches = Match.objects.filter(
@@ -397,9 +345,12 @@ def get_matches(request: Request) -> Response:
 OTHER VIEWS
 '''
 
+# TODO: cleanup old photos when new ones are added
+# TODO: use this as a function in update profile view instead of having a separate view and making multiple calls
 
-@api_view(['PUT'])
-@permission_classes([IsAuthenticated])
+
+@ api_view(['PUT'])
+@ permission_classes([IsAuthenticated])
 def get_presigned_urls(request: Request, user_id: int) -> Response:
     user = get_user_from_db(user_id)
     if isinstance(user, Response):
@@ -407,49 +358,29 @@ def get_presigned_urls(request: Request, user_id: int) -> Response:
 
     try:
         data: PresignedUrlsRequest = request.data
-        photo_count = data.get('photo_count', 0)
+        photo_indexes: List[int] = data.get('photo_indexes')
 
-        if photo_count <= 0:
-            return Response({'error': 'Invalid photo count'}, status=status.HTTP_400_BAD_REQUEST)
+        if not photo_indexes:
+            return Response({'error': 'No photo indexes provided'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(photo_indexes) > 6:
+            return Response({'error': 'This operation would exceed the maximum of 6 photos.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        with transaction.atomic():
-            profile = Profile.objects.select_for_update().get(user_id=user_id)
+        s3_client = boto3.client('s3',
+                                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                                 region_name=settings.AWS_S3_REGION_NAME)
 
-            # Count existing non-null photos
-            existing_photos = sum(
-                1 for url in profile.picture_urls if url is not None)
+        presigned_urls: List[str] = []
+        for i in photo_indexes:
+            key = f'user_{user_id}/photo_{i}.jpg'
+            presigned_url = s3_client.generate_presigned_url('put_object',
+                                                             Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
+                                                                     'Key': key},
+                                                             ExpiresIn=3600)
+            presigned_urls.append(presigned_url)
 
-            # Check if this operation would exceed the 7-photo limit
-            if existing_photos + photo_count > 7:
-                return Response({'error': 'This operation would exceed the maximum of 7 photos.'},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-            s3_client = boto3.client('s3',
-                                     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                                     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                                     region_name=settings.AWS_S3_REGION_NAME)
-
-            presigned_urls: List[PresignedUrl] = []
-
-            for i in range(photo_count):
-                # Find the next available index
-                next_index = next((i for i, url in enumerate(
-                    profile.picture_urls) if url is None), len(profile.picture_urls))
-                if next_index >= 7:
-                    # This shouldn't happen due to the earlier check, but just in case
-                    return Response({'error': 'No available slots for new photos'}, status=status.HTTP_400_BAD_REQUEST)
-
-                key = f'user_{user_id}/photo_{next_index}.jpg'
-                presigned_url = s3_client.generate_presigned_url('put_object',
-                                                                 Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
-                                                                         'Key': key},
-                                                                 ExpiresIn=3600)
-                presigned_urls.append({
-                    'index': next_index,
-                    'url': presigned_url
-                })
-
-        response: PresignedUrlsResponse = {'presigned_urls': presigned_urls}
+        response = {'presigned_urls': presigned_urls}
         return Response(response)
 
     except Profile.DoesNotExist:

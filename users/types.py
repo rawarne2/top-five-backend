@@ -1,4 +1,4 @@
-from typing import List, Tuple, TypedDict
+from typing import List, NotRequired, TypedDict
 from datetime import date
 
 
@@ -20,20 +20,26 @@ class DeleteUserData(TypedDict):
     refresh_token: str
 
 
-class ProfileUpdateData(TypedDict, total=False):
-    bio: str
-    interests: List[int]
-    picture_urls: List[Tuple[int, str]]
-    gender: str
-    location: str
-    preferred_gender: str
-    min_preferred_age: int
-    max_preferred_age: int
-    phone_number: str
-
-
-class ProfileData(ProfileUpdateData):
-    user: int  # User ID
+class ProfileData(TypedDict, total=False):
+    id: NotRequired[int]
+    bio: NotRequired[str]
+    interests: NotRequired[List[int]]
+    picture_urls: NotRequired[List[str]]
+    gender: NotRequired[str]
+    location: NotRequired[str]
+    preferred_gender: NotRequired[str]
+    min_preferred_age: NotRequired[int]
+    max_preferred_age: NotRequired[int]
+    phone_number: NotRequired[str]
+    height: NotRequired[int]
+    pronouns: NotRequired[str]
+    highest_education: NotRequired[str]
+    political_views: NotRequired[str]
+    pet_preferences: NotRequired[str]
+    exercise_level: NotRequired[str]
+    additional_info: NotRequired[str]
+    occupation: NotRequired[str]
+    goals: NotRequired[str]
 
 
 class MatchData(TypedDict):
@@ -68,14 +74,6 @@ class LogoutData(TypedDict):
     refresh_token: str
 
 
+# indexes of photos that will be updated
 class PresignedUrlsRequest(TypedDict):
-    photo_count: List[int]
-
-
-class PresignedUrl(TypedDict):
-    index: int
-    url: str
-
-
-class PresignedUrlsResponse(TypedDict):
-    presigned_urls: List[PresignedUrl]
+    photo_indexes: List[int]
