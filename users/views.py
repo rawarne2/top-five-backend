@@ -22,7 +22,7 @@ from users.types import DeleteUserData, LoginData, LogoutData, MatchData, Matche
 from .serializers import UserSerializer, ProfileSerializer
 from .models import Match, User, Profile
 from .utils import get_user_from_db
-
+from .choices import *
 
 logger = logging.getLogger(__name__)
 
@@ -393,3 +393,33 @@ def get_presigned_urls(request: Request, user_id: int) -> Response:
         logger.error(
             f"Error in get_presigned_urls for user_id {user_id}: {str(e)}")
         return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@ permission_classes([AllowAny])
+@api_view(['GET'])
+def get_profile_choices(request):
+    """Return all choice options for profile fields"""
+    return Response({
+        'alcohol': [{'value': v, 'label': l} for v, l in ALCOHOL_CHOICES],
+        'body_type': [{'value': v, 'label': l} for v, l in BODY_TYPE_CHOICES],
+        'cannabis': [{'value': v, 'label': l} for v, l in CANNABIS_CHOICES],
+        'communication_style': [{'value': v, 'label': l} for v, l in COMMUNICATION_STYLE_CHOICES],
+        'diet': [{'value': v, 'label': l} for v, l in DIET_CHOICES],
+        'education': [{'value': v, 'label': l} for v, l in EDUCATION_CHOICES],
+        'ethnicity': [{'value': v, 'label': l} for v, l in ETHNICITY_CHOICES],
+        'exercise': [{'value': v, 'label': l} for v, l in EXERCISE_CHOICES],
+        'gender': [{'value': v, 'label': l} for v, l in GENDER_CHOICES],
+        'interests': [{'value': v, 'label': l} for v, l in INTEREST_CHOICES],
+        'love_languages': [{'value': v, 'label': l} for v, l in LOVE_LANGUAGE_CHOICES],
+        'personality_type': [{'value': v, 'label': l} for v, l in PERSONALITY_TYPE_CHOICES],
+        'pets': [{'value': v, 'label': l} for v, l in PET_CHOICES],
+        'political': [{'value': v, 'label': l} for v, l in POLITICAL_CHOICES],
+        'pronouns': [{'value': v, 'label': l} for v, l in PRONOUN_CHOICES],
+        'relationship_goals': [{'value': v, 'label': l} for v, l in RELATIONSHIP_GOAL_CHOICES],
+        'religion': [{'value': v, 'label': l} for v, l in RELIGION_CHOICES],
+        'sexual_orientation': [{'value': v, 'label': l} for v, l in SEXUAL_ORIENTATION_CHOICES],
+        'sleep_pattern': [{'value': v, 'label': l} for v, l in SLEEP_PATTERN_CHOICES],
+        'social_media_usage': [{'value': v, 'label': l} for v, l in SOCIAL_MEDIA_USAGE_CHOICES],
+        'vaccine_status': [{'value': v, 'label': l} for v, l in VACCINE_STATUS_CHOICES],
+        'zodiac': [{'value': v, 'label': l} for v, l in ZODIAC_CHOICES]
+    })

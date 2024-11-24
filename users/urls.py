@@ -19,7 +19,7 @@ urlpatterns = [
     path("change_password/", views.change_password, name="change_password"),
     path("reset_password/", views.reset_password, name="reset_password"),
     path("get_profile/<int:user_id>/", views.get_profile, name="get_profile"),
-
+    path('profile_choices/', views.get_profile_choices, name='profile_choices'),
     path('get_presigned_urls/<int:user_id>/',
          views.get_presigned_urls, name='get_presigned_urls'),
 ]

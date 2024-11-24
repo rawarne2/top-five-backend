@@ -3,34 +3,32 @@ from django.contrib.auth.models import AbstractUser, PermissionsMixin, BaseUserM
 from django.contrib.postgres.fields import ArrayField
 from django.forms import ValidationError
 from datetime import datetime, timedelta
+from .choices import *
 
 
-class Interest(models.Model):
-    name = models.CharField(max_length=25, unique=True)
-    # TODO: make a list of common interest choices
+class Prompt(models.Model):
+    is_active = models.BooleanField(default=True)
+    text = models.CharField(max_length=250)
+
+    def __str__(self):
+        return self.text
 
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password, **extra_fields):
-        """
-        Create and save a User with the given email and password.
-        This also creates a profile for the user with default values.
-        """
         if not email:
             raise ValueError('The Email must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, username=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
-
         Profile.objects.create(user=user)
-
         return user
 
 
 class User(AbstractUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
     birthdate = models.DateField(blank=True, null=True)
+    email = models.EmailField(unique=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'birthdate']
@@ -42,80 +40,94 @@ class User(AbstractUser, PermissionsMixin):
 
 
 class Profile(models.Model):
-    GENDER_CHOICES = [
-        ('male', 'Male'),
-        ('female', 'Female'),
-        ('non-binary', 'Non-Binary'),
-    ]
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name='profile')
+    alcohol_frequency = models.CharField(
+        max_length=20, choices=ALCOHOL_CHOICES, default='prefer_not_to_say')
     bio = models.TextField(blank=True)
-    interests = models.ManyToManyField(Interest, blank=True)
-    picture_urls = ArrayField(models.TextField(), blank=True, default=list,)
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
-    location = models.CharField(max_length=100)
-    preferred_gender = models.CharField(
-        max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
-    min_preferred_age = models.IntegerField(default=18)
-    max_preferred_age = models.IntegerField(default=99)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-    height = models.PositiveIntegerField(
-        blank=True, null=True)  # Height in centimeters
-    PRONOUN_CHOICES = [
-        ('he/him', 'He/Him'),
-        ('she/her', 'She/Her'),
-        ('they/them', 'They/Them'),
-        ('other', 'Other'),
-    ]
-    pronouns = models.CharField(
-        max_length=10, choices=PRONOUN_CHOICES, blank=True, null=True)
-    EDUCATION_CHOICES = [
-        ('high_school', 'High School'),
-        ('associate', 'Associate Degree'),
-        ('bachelor', 'Bachelor\'s Degree'),
-        ('master', 'Master\'s Degree'),
-        ('phd', 'PhD'),
-        ('other', 'Other'),
-    ]
-    highest_education = models.CharField(
-        max_length=15, choices=EDUCATION_CHOICES, blank=True, null=True)
-    POLITICAL_CHOICES = [
-        ('liberal', 'Liberal'),
-        ('conservative', 'Conservative'),
-        ('moderate', 'Moderate'),
-        ('apolitical', 'Apolitical'),
-        ('other', 'Other'),
-    ]
-    political_views = models.CharField(
-        max_length=15, choices=POLITICAL_CHOICES, blank=True, null=True)
-    PET_CHOICES = [
-        ('dogs', 'Dogs'),
-        ('cats', 'Cats'),
-        ('birds', 'Birds'),
-        ('reptiles', 'Reptiles'),
-        ('small_animals', 'Small Animals'),
-        ('multiple', 'Multiple Types'),
-        ('none', 'None'),
-    ]
-    pet_preferences = models.CharField(
-        max_length=15, choices=PET_CHOICES, default='none')
-    EXERCISE_CHOICES = [
-        ('never', 'Never'),
-        ('rarely', 'Rarely'),
-        ('sometimes', 'Sometimes'),
-        ('often', 'Often'),
-        ('daily', 'Daily'),
-    ]
+    body_type = models.CharField(
+        max_length=20, choices=BODY_TYPE_CHOICES, default='prefer_not_to_say')
+    cannabis_friendly = models.CharField(
+        max_length=20, choices=CANNABIS_CHOICES, default='prefer_not_to_say')
+    communication_style = models.CharField(
+        max_length=15, choices=COMMUNICATION_STYLE_CHOICES, default='mixed')
+    company = models.CharField(max_length=100, blank=True, null=True)
+    covid_vaccine_status = models.CharField(
+        max_length=20, choices=VACCINE_STATUS_CHOICES, default='prefer_not_to_say')
+    dietary_preferences = models.CharField(
+        max_length=15, choices=DIET_CHOICES, default='omnivore')
+    family_plans = models.CharField(
+        max_length=40, choices=FAMILY_PLANS, default='undecided')
+    ethnicity = models.CharField(
+        max_length=20, choices=ETHNICITY_CHOICES, default='prefer_not_to_say')
     exercise_level = models.CharField(
         max_length=10, choices=EXERCISE_CHOICES, blank=True, null=True)
-    additional_info = models.TextField(blank=True, null=True)
-    occupation = models.CharField(max_length=50, blank=True, null=True)
-    goals = models.TextField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
+    height = models.PositiveIntegerField(blank=True, null=True)
+    highest_education = models.CharField(
+        max_length=18, choices=EDUCATION_CHOICES, blank=True, null=True)
+    interests = ArrayField(
+        models.CharField(max_length=20, choices=INTEREST_CHOICES),
+        blank=True,
+        default=list
+    )
+    job_title = models.CharField(max_length=100, blank=True, null=True)
+    life_goals = models.TextField(blank=True, null=True)
+    location = models.CharField(max_length=100)
+    love_languages = ArrayField(
+        models.CharField(max_length=20, choices=LOVE_LANGUAGE_CHOICES),
+        blank=True,
+        default=list
+    )
+    max_preferred_age = models.IntegerField(default=99)
+    min_preferred_age = models.IntegerField(default=18)
+    personality_type = models.CharField(
+        max_length=10, choices=PERSONALITY_TYPE_CHOICES, default='unknown')
+    pet_preferences = models.CharField(
+        max_length=15, choices=PET_CHOICES, default='none')
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    picture_urls = ArrayField(models.TextField(), blank=True, default=list)
+    political_views = models.CharField(
+        max_length=12, choices=POLITICAL_CHOICES, blank=True, null=True)
+    preferred_gender = models.CharField(
+        max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    prompts = models.ManyToManyField('Prompt', through='PromptResponse')
+    pronouns = ArrayField(
+        models.CharField(max_length=20, choices=PRONOUN_CHOICES),
+        blank=True,
+        default=list,
+        help_text="User's preferred pronouns (can select multiple)"
+    )
+    relationship_goals = models.CharField(
+        max_length=20, choices=RELATIONSHIP_GOAL_CHOICES, default='not_sure')
+    religion = models.CharField(
+        max_length=20, choices=RELIGION_CHOICES, default='prefer_not_to_say')
+    sexual_orientation = models.CharField(
+        max_length=20, choices=SEXUAL_ORIENTATION_CHOICES, default='prefer_not_to_say')
+    sleep_pattern = models.CharField(
+        max_length=15, choices=SLEEP_PATTERN_CHOICES, default='regular')
+    social_media_usage = models.CharField(
+        max_length=15, choices=SOCIAL_MEDIA_USAGE_CHOICES, default='moderate')
+    special_talents = models.TextField(blank=True, null=True)
+    user = models.OneToOneField(
+        'User', on_delete=models.CASCADE, related_name='profile')
+    zodiac_sign = models.CharField(
+        max_length=15, choices=ZODIAC_CHOICES, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.get_full_name()}'s Profile"
 
-    objects = models.Manager()
+    def clean(self):
+        if not (1 <= len(self.picture_urls) <= 6):
+            raise ValidationError(
+                'Users must have between 1 and 6 picture_urls.')
+        if self.picture_urls:
+            current_time = int(datetime.now().timestamp())
+            self.picture_urls = [
+                f"{url.split('?')[0]}?t={current_time}"
+                for url in self.picture_urls
+            ]
+
+        if self.pronouns and not all(pronoun in dict(PRONOUN_CHOICES) for pronoun in self.pronouns):
+            raise ValidationError('Invalid pronoun choice provided')
 
     def get_filtered_profiles(self):
         if self.preferred_gender:
@@ -131,22 +143,25 @@ class Profile(models.Model):
             return potential_matches
         return Profile.objects.none()
 
-    def clean(self):
-        # Ensure the number of picture_urls is between 1 and 6
-        if not (1 <= len(self.picture_urls) <= 6):
-            raise ValidationError(
-                'Users must have between 1 and 6 picture_urls.')
-        if self.picture_urls:
-            current_time = int(datetime.now().timestamp())
-            self.picture_urls = [
-                f"{url.split('?')[0]}?t={current_time}"
-                for url in self.picture_urls
-            ]
-
     def save(self, *args, **kwargs):
-        # Call the full clean method to perform validation
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class PromptResponse(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    prompt = models.ForeignKey(Prompt, on_delete=models.CASCADE)
+    response = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['profile', 'prompt'],
+                name='unique_profile_prompt'
+            )
+        ]
 
 
 class Match(models.Model):
