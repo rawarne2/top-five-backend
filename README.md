@@ -1,58 +1,125 @@
-# top-five-backend
+# Top Five Backend
 
-## Backend service for Top Five dating app
+## Overview
 
-### About
-This is a backend service built using Django REST Framework, to handle the requests from the front-end of the Top Five dating app React Native project. This project is in progress and is being created entirely by Rashaun Warner. **Please do not steal any ideas from this project**
+Top Five is an innovative dating application designed to create meaningful connections through a unique matching algorithm. This repository contains the Django-based REST API backend that powers both the iOS and Android mobile applications.
 
-### Tech Stack:
+The application focuses on quality over quantity in matches, employing sophisticated filtering and a novel approach to user interactions. It emphasizes secure data handling and scalable architecture to support a growing user base.
 
-- Django: Python web framework
-- PostgreSQL: SQL database
+## Technology Stack
 
-### Fully Functional URLs with Custom Views (not including admin)
-- api/signup
-- api/login
-- api/logout
-- api/users/user_by_id/{id}/
-- api/users/update_user/{id}/
-- api/users/delete_user/{id}/
-- api/users/get_profile/{id}/
-- api/users/create_profile/{id}/
-- api/users/update_profile/{id}/
+- **Framework**: Django 5.0.7 with Django REST Framework
+- **Database**: PostgreSQL
+- **Authentication**: JWT (JSON Web Tokens) with Simple JWT
+- **Cloud Services**: AWS S3 for media storage
+- **Language**: Python 3.11
+- **API Design**: RESTful architecture
 
+## Key Features
 
+- **Advanced Authentication System**
+  - JWT-based authentication with refresh token mechanism
+  - Secure password handling
+  - Session management
 
-### Recent Backend Progress (most recent --> oldest): 
-- Created views for get profile, update profile, delete user
-- Created Interests model and serializer
-- Created Matches model and serializer
-- Created Profile model and serializer
-- **MAJOR CHANGE: I decided to switch from MongoDB to PostgreSQL! This big decision was decided after discovering that their compatibility is too limited for my needs. This was a great learning experience!**
-- Blacklisting JWTs completely works. Login adds Outstanding Token and starts new session, new refresh and access with tokens/refresh, and logout blacklists and ends the session.
-- ~~Prevented refresh tokens from  being used as access tokens on protected routes~~
-- Implemented outstanding tokens on login and blacklisting refresh tokens on logout.
-- Completed Login and Logout views with Django REST Framework Simple JWT 
-- Created Django users views and urls for authentication
-- Created Django users model and serializer
-- Created admin login, logout, reset password, and register views
-- Created MongoDB Atlas cluster and connect to Django project using PyMongo and djongo
-- Created Django project and installed dependencies
+- **Comprehensive Profile Management**
+  - Detailed user profiles with extensive customization
+  - Multi-photo support with S3 integration
+  - Profile verification system
 
+- **Matching System**
+  - Sophisticated matching algorithm
+  - Preference-based filtering
+  - Profile ranking system
 
+- **Security-First Design**
+  - Encrypted data storage
+  - Secure media handling
+  - Privacy protection measures
 
-### How to run:
+## API Endpoints
 
-- create virtual environment: `python3 -m venv topfive_env`
-- activate virtual environment: `source ./topfive_env/bin/activate`
-- install dependencies: `pip install -r requirements.txt`
-- create .env file in topfive directory and add the following:
-```
-SECRET_KEY=your_secret_key
-DATABASE_NAME=your_mongodb_url
-DATABASE_USER=your_mongodb_username
-DATABASE_DATABASE_PASSWORDPASSWORD=your_mongodb_password
-DEBUG=True
-IS_PRODUCTION=False
-```
-- run server: `python manage.py runserver`
+### Authentication
+- `POST /api/users/login/` - User authentication
+- `POST /api/users/logout/` - Session termination
+- `POST /api/token/refresh/` - JWT refresh
+
+### Profile Management
+- `GET /api/users/get_profile/<id>/` - Profile retrieval
+- `PUT /api/users/update_profile/<id>/` - Profile updates
+- `PUT /api/users/get_presigned_urls/<id>/` - Photo upload management
+
+### User Interactions
+- `GET /api/users/potential_matches/` - Match suggestions
+- `GET /api/users/matches/` - Current matches
+
+### Account Management
+- `POST /api/users/signup/` - Account creation
+- `PUT /api/users/update_user/<id>/` - Account updates
+- `POST /api/users/change_password/` - Password management
+
+## Security Features
+
+- **Authentication**
+  - JWT token-based system
+  - Token blacklisting
+  - Refresh token rotation
+
+- **Data Protection**
+  - Encrypted data storage
+  - Secure password hashing
+  - Protected API endpoints
+
+- **Media Security**
+  - S3 presigned URLs
+  - Temporary access tokens
+  - Secure file uploads
+
+- **Infrastructure**
+  - CORS protection
+  - Rate limiting
+  - Input validation
+
+## Intellectual Property Notice
+
+© 2024 All Rights Reserved
+
+This is a proprietary application intended for commercial release on the Apple App Store and Google Play Store. This codebase represents confidential intellectual property with all rights reserved. The implementation, design patterns, and algorithms contained within are protected by copyright law and are the exclusive property of the owner.
+
+**Usage Restrictions:**
+- This code is private and proprietary
+- No part may be reproduced or distributed
+- All rights reserved for commercial use
+- Future app store deployment protected
+
+The unique matching algorithm, user interaction patterns, and overall application concept are proprietary innovations intended for commercial deployment.
+
+## For Recruiters and Hiring Managers
+
+This project demonstrates:
+
+**Technical Proficiency**
+- Modern Django/Python development
+- RESTful API design and implementation
+- Cloud service integration (AWS)
+- Authentication system design
+- Database modeling and optimization
+
+**Architecture Highlights**
+- Scalable backend design
+- Security-first implementation
+- Clean code practices
+- Comprehensive API documentation
+- Mobile-first architecture
+
+**Project Management**
+- End-to-end feature implementation
+- Commercial-grade security measures
+- App store deployment preparation
+- User privacy protection
+
+This project represents both technical expertise and commercial development capabilities, showcasing the ability to build production-ready applications with market potential.
+
+## Contact
+
+For professional inquiries or detailed technical discussions, please reach out through [LinkedIn](https://www.linkedin.com/in/rashaun-warner/) or email me at RashaunWarner.com.
